@@ -19,6 +19,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import io.github.some_example_name.Main;
 import io.github.some_example_name.entity.Player;
 import io.github.some_example_name.tools.GameCamera;
+import io.github.some_example_name.tools.ui.HealthUI;
 
 public class MainGameScreen implements Screen {
 
@@ -32,7 +33,7 @@ public class MainGameScreen implements Screen {
     private boolean paused = false;
 
     private Skin skin;
-    private Main game;
+
 
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
@@ -40,6 +41,10 @@ public class MainGameScreen implements Screen {
 
     private float worldWidth;
     private float worldHeight;
+
+    private HealthUI healthUI;
+    private Main game;
+
 
     public MainGameScreen(Main game) {
         this.game = game;
@@ -51,6 +56,7 @@ public class MainGameScreen implements Screen {
         Gdx.input.setInputProcessor(gameStage);
 
         skin = new Skin(Gdx.files.internal("craftacular-ui.json"));
+        healthUI = new HealthUI(skin);
 
         createPauseMenu();
     }
@@ -106,8 +112,6 @@ public class MainGameScreen implements Screen {
 
         batch = new SpriteBatch();
         player = new Player("player_walk.png", 400, 256);
-
-
     }
 
     @Override
@@ -134,15 +138,29 @@ public class MainGameScreen implements Screen {
         // Render everything
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
+        // Render map
         mapRenderer.setView(gameCamera.getCamera());
         mapRenderer.render();
 
+        // Render game objects
         batch.setProjectionMatrix(gameCamera.getCamera().combined);
         batch.begin();
         player.draw(batch);
         batch.end();
 
+        // Render game stage
         gameStage.draw();
+
+        // Render UI with screen coordinates
+        batch.setProjectionMatrix(uiStage.getCamera().combined);
+        batch.begin();
+
+        // Render health UI
+        healthUI.render(batch, player, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        batch.end();
+
+        // Render UI stage (includes pause menu)
         uiStage.draw();
     }
 
@@ -169,6 +187,7 @@ public class MainGameScreen implements Screen {
         gameStage.dispose();
         uiStage.dispose();
         skin.dispose();
+        healthUI.dispose(); // Fixed typo
         if (map != null) map.dispose();
         if (mapRenderer != null) mapRenderer.dispose();
     }
