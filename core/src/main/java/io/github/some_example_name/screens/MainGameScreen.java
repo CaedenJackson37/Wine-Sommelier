@@ -20,6 +20,7 @@ import io.github.some_example_name.Main;
 import io.github.some_example_name.entity.Player;
 import io.github.some_example_name.tools.GameCamera;
 import io.github.some_example_name.tools.ui.HealthUI;
+import io.github.some_example_name.ui.PauseMenu;
 
 public class MainGameScreen implements Screen {
 
@@ -29,7 +30,7 @@ public class MainGameScreen implements Screen {
     private Stage gameStage;
     private Stage uiStage;
 
-    private Table pauseMenu;
+    private PauseMenu pauseMenu;
     private boolean paused = false;
 
     private Skin skin;
@@ -58,40 +59,9 @@ public class MainGameScreen implements Screen {
         skin = new Skin(Gdx.files.internal("craftacular-ui.json"));
         healthUI = new HealthUI(skin);
 
-        createPauseMenu();
+        pauseMenu = new PauseMenu(skin, uiStage);
     }
 
-    private void createPauseMenu() {
-        pauseMenu = new Table();
-        pauseMenu.setFillParent(true);
-        pauseMenu.setVisible(false); // Start hidden
-
-        Label title = new Label("Paused", skin, "title");
-        TextButton resumeButton = new TextButton("Resume", skin);
-        TextButton quitButton = new TextButton("Quit", skin);
-
-        resumeButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                paused = false;
-                pauseMenu.setVisible(false);
-                Gdx.input.setInputProcessor(gameStage); // back to game input
-            }
-        });
-
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                Gdx.app.exit();
-            }
-        });
-
-        pauseMenu.add(title).padBottom(20).row();
-        pauseMenu.add(resumeButton).padBottom(10).row();
-        pauseMenu.add(quitButton).padBottom(10).row();
-
-        uiStage.addActor(pauseMenu);
-    }
 
     @Override
     public void show() {
@@ -118,13 +88,11 @@ public class MainGameScreen implements Screen {
     public void render(float delta) {
         // Handle pause toggle
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            paused = !paused;
-            pauseMenu.setVisible(paused);
-            Gdx.input.setInputProcessor(paused ? uiStage : gameStage);
+            pauseMenu.togglePause(gameStage);
         }
 
         // Update game logic only when not paused
-        if (!paused) {
+        if (!pauseMenu.isPaused()) {
             player.handleInput(delta);
             player.clampToMapBounds(worldWidth, worldHeight);
             gameCamera.follow(player.getCenterX(), player.getCenterY());
