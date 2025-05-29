@@ -93,7 +93,7 @@ public class MainGameScreen implements Screen {
 
         // Update game logic only when not paused
         if (!pauseMenu.isPaused()) {
-            player.handleInput(delta);
+            player.update(delta);
             player.clampToMapBounds(worldWidth, worldHeight);
             gameCamera.follow(player.getCenterX(), player.getCenterY());
             gameCamera.clampToWorldBounds();

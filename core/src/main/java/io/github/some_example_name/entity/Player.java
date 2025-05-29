@@ -62,7 +62,9 @@ public class Player {
         if (isInvincible) {
             invincibilityTimer -= delta;
             if (invincibilityTimer <= 0) {
+                invincibilityTimer = 0f;
                 isInvincible = false;
+                System.out.println("Invincibility has ended.");
             }
         }
 
@@ -120,6 +122,7 @@ public class Player {
         // Start invincibility period
         isInvincible = true;
         invincibilityTimer = INVINCIBILITY_TIME;
+
 
         // Start damage flash effect
         damageFlashTimer = DAMAGE_FLASH_DURATION;
