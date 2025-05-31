@@ -4,23 +4,22 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import io.github.some_example_name.Main;
 import io.github.some_example_name.entity.Player;
+import io.github.some_example_name.tools.DayNightCycle;
 import io.github.some_example_name.tools.GameCamera;
+import io.github.some_example_name.tools.GameTime;
 import io.github.some_example_name.tools.ui.HealthUI;
-import io.github.some_example_name.ui.PauseMenu;
+import io.github.some_example_name.tools.ui.GameTimeUI;
+import io.github.some_example_name.tools.ui.PauseMenuUI;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 public class MainGameScreen implements Screen {
 
@@ -30,11 +29,16 @@ public class MainGameScreen implements Screen {
     private Stage gameStage;
     private Stage uiStage;
 
-    private PauseMenu pauseMenu;
-    private boolean paused = false;
+    private DayNightCycle dayNightCycle;
+    private ShapeRenderer shapeRenderer;
+
+    private PauseMenuUI pauseMenuUI;
+
 
     private Skin skin;
 
+    private GameTime gameTime = new GameTime();
+    private GameTimeUI gameTimeUI; // NEW
 
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
@@ -46,29 +50,31 @@ public class MainGameScreen implements Screen {
     private HealthUI healthUI;
     private Main game;
 
-
     public MainGameScreen(Main game) {
         this.game = game;
 
         gameStage = new Stage(new ScreenViewport());
         uiStage = new Stage(new ScreenViewport());
 
+        dayNightCycle = new DayNightCycle();
+        shapeRenderer = new ShapeRenderer();
+
         // Start with game stage as input processor
         Gdx.input.setInputProcessor(gameStage);
 
         skin = new Skin(Gdx.files.internal("craftacular-ui.json"));
+
         healthUI = new HealthUI(skin);
+        gameTimeUI = new GameTimeUI(skin); // NEW
 
-        pauseMenu = new PauseMenu(skin, uiStage);
+        pauseMenuUI = new PauseMenuUI(skin, uiStage);
     }
-
 
     @Override
     public void show() {
         // Load map
         map = new TmxMapLoader().load("map1.tmx");
 
-        // Assume tile size and map dimensions
         int tileWidth = 16;
         int tileHeight = 16;
         int mapWidthInTiles = 50;
@@ -81,18 +87,16 @@ public class MainGameScreen implements Screen {
         mapRenderer = new OrthogonalTiledMapRenderer(map);
 
         batch = new SpriteBatch();
-        player = new Player("player_walk.png", 400, 256);
+        player = new Player(game, "walk_sheet.png", 400, 256);
     }
 
     @Override
     public void render(float delta) {
-        // Handle pause toggle
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            pauseMenu.togglePause(gameStage);
+            pauseMenuUI.togglePause();
         }
 
-        // Update game logic only when not paused
-        if (!pauseMenu.isPaused()) {
+        if (!pauseMenuUI.isPaused()) {
             player.update(delta);
             player.clampToMapBounds(worldWidth, worldHeight);
             gameCamera.follow(player.getCenterX(), player.getCenterY());
@@ -100,35 +104,36 @@ public class MainGameScreen implements Screen {
             gameStage.act(delta);
         }
 
-        // Always update UI
         uiStage.act(delta);
+        gameTime.update(delta); // Update game time
 
-        // Render everything
+        dayNightCycle.setTimeOfDay(gameTime.getHours());
+
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        // Render map
         mapRenderer.setView(gameCamera.getCamera());
         mapRenderer.render();
 
-        // Render game objects
         batch.setProjectionMatrix(gameCamera.getCamera().combined);
         batch.begin();
         player.draw(batch);
         batch.end();
 
-        // Render game stage
         gameStage.draw();
 
-        // Render UI with screen coordinates
+        dayNightCycle.update(delta);
+        shapeRenderer.setProjectionMatrix(uiStage.getCamera().combined);
+        dayNightCycle.renderOverlay(shapeRenderer, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+
         batch.setProjectionMatrix(uiStage.getCamera().combined);
         batch.begin();
 
-        // Render health UI
         healthUI.render(batch, player, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        gameTimeUI.render(batch, gameTime, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()); // NEW
 
         batch.end();
 
-        // Render UI stage (includes pause menu)
         uiStage.draw();
     }
 
@@ -155,7 +160,7 @@ public class MainGameScreen implements Screen {
         gameStage.dispose();
         uiStage.dispose();
         skin.dispose();
-        healthUI.dispose(); // Fixed typo
+        healthUI.dispose();
         if (map != null) map.dispose();
         if (mapRenderer != null) mapRenderer.dispose();
     }
