@@ -8,21 +8,29 @@ public class GameTime {
     private int month = 1;
     private int year = 1;
 
+    private boolean paused = false;
+
     private final int MINUTES_IN_HOUR = 60;
     private final int HOURS_IN_DAY = 24;
     private final int DAYS_IN_MONTH = 20;
     private final int MONTHS_IN_YEAR = 4;
 
-    // Time passes faster: 1 real second = 1 in-game minute
-    private final float SECONDS_PER_INGAME_MINUTE = 1f;
+    // Time passes faster: 10 real seconds = 1 in-game minute
+    private final float SECONDS_PER_INGAME_MINUTE = 0.5f;
 
     public void update(float delta) {
-        timeAccumulator += delta;
+        if (!paused) {
+            timeAccumulator += delta;
 
-        while (timeAccumulator >= SECONDS_PER_INGAME_MINUTE) {
-            timeAccumulator -= SECONDS_PER_INGAME_MINUTE;
-            advanceTime();
+            while (timeAccumulator >= SECONDS_PER_INGAME_MINUTE) {
+                timeAccumulator -= SECONDS_PER_INGAME_MINUTE;
+                advanceTime();
+            }
         }
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 
     private void advanceTime() {

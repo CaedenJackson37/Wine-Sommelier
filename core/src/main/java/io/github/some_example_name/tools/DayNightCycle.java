@@ -7,6 +7,7 @@ public class DayNightCycle {
 
     private float timeOfDay;
     private float cycleSpeed = 10f;
+    private GameTime gameTime = new GameTime();
 
     public void update(float delta) {
         timeOfDay += delta * cycleSpeed;
@@ -19,16 +20,11 @@ public class DayNightCycle {
         return timeOfDay;
     }
 
-    public Color getTintColor() {
-        if (timeOfDay >= 6f && timeOfDay < 18f) {
-            return new Color(0, 0, 0, 0f);
-        } else if (timeOfDay >= 18f && timeOfDay < 20f) {
-            return new Color(0, 0, 0.2f, 0.3f);
-            } else if (timeOfDay >= 20f || timeOfDay < 4f) {
-            return new Color(0, 0, 0.4f, 0.5f);
-        } else {
-            return new Color(0, 0, 0.1f, 0.2f);
-        }
+    /*public Color getTintColor() {
+        double z = Math.cos((gameTime.getHours()-14) * Math.PI / 12);
+        float b = (float) (0.3f + 0.7f * (z + 1.0) / 2.0);
+
+        return new Color(b, b, b, 1.0f);
     }
 
     public void renderOverlay(ShapeRenderer renderer, float screenWidth, float screenHeight) {
@@ -39,7 +35,7 @@ public class DayNightCycle {
         renderer.setColor(tint);
         renderer.rect(0, 0, screenWidth, screenHeight);
         renderer.end();
-    }
+    }*/
 
     public void setTimeOfDay(float hours) {
         this.timeOfDay = hours % 24f;

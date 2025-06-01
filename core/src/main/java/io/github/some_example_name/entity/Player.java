@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import io.github.some_example_name.Main;
 import io.github.some_example_name.screens.DeathScreen;
 
@@ -34,6 +35,7 @@ public class Player {
     private float speed = 50f;
     private int frameWidth = 16;
     private int frameHeight = 16;
+    private float lastX, lastY;
 
     //Health System
     private int health = 100;
@@ -44,6 +46,8 @@ public class Player {
     private static final float DAMAGE_FLASH_DURATION = 0.1f;
     private static final float INVINCIBILITY_TIME = 1.0f;
 
+    //Box2D
+    private Rectangle bounds;
 
     //Health regeneration
     private float healthRegenTimer = 0f;
@@ -55,13 +59,17 @@ public class Player {
     //Remove before posting
     private boolean debugMode = true;
 
+    //Main
     public Player(Main game, String walkSheetPath, float startX, float startY) {
         this.game = game;
         this.walkSheet = new Texture(walkSheetPath);
 
         TextureRegion[][] tmp = TextureRegion.split(walkSheet, frameWidth, frameHeight);
 
-        int frameCount = tmp[0].length;
+        this.x = startX;
+        this.y = startY;
+
+        bounds = new Rectangle(x, y, frameWidth, frameHeight);
 
         walkDown = new Animation<>(FRAME_DURATION, tmp[0]);
         walkLeft = new Animation<>(FRAME_DURATION, tmp[1]);
@@ -72,10 +80,25 @@ public class Player {
         y = startY;
     }
 
-    //Updates health system and player input
+
+    //Updates health system and player input and position
     public void update(float delta) {
+        lastX = getX();
+        lastY = getY();
         handleInput(delta);
         updateHealthSystem(delta);
+    }
+
+    //Sets player position
+    public void setPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
+        bounds.setPosition(x, y);
+    }
+
+    //Reverts to last player position
+    public void revertPosition() {
+        setPosition(lastX, lastY);
     }
 
     //Updates player health system
@@ -126,7 +149,7 @@ public class Player {
             currentDirection = Direction.RIGHT;
         }
 
-        handleDebugInput();
+        handleDebugInput(); //For debugging
 
         boolean isMoving = (dx != 0 || dy != 0);
 
@@ -136,6 +159,7 @@ public class Player {
         if (isMoving) {
             stateTime += delta;
         }
+        bounds.setPosition(x, y);
     }
 
     //Remove before posting
@@ -252,6 +276,7 @@ public class Player {
     public int getMaxHealth() { return maxHealth; }
     public boolean isAlive() { return health > 0; }
     public boolean isInvincible() { return isInvincible; }
+    public Rectangle getBounds() { return bounds; }
 
 
     //Setters
